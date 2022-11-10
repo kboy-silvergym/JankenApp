@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:janken_app/result_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,9 +34,13 @@ const String choki = '✌️';
 const String par = '✋';
 
 class _JankenPageState extends State<JankenPage> {
-  String myHand = goo;
-  String computerHand = goo;
-  String result = '引き分け';
+  String myHand = '';
+  String computerHand = '';
+  String result = '';
+  int currentRound = 0;
+  int winCount = 0;
+  int drawCount = 0;
+  int loseCount = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -48,51 +52,73 @@ class _JankenPageState extends State<JankenPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              result,
-              style: TextStyle(
-                fontSize: 60,
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    currentRound != 0 ? '$winCount勝$loseCount敗$drawCount引き分け' : '',
+                    style: TextStyle(
+                      fontSize: 24,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 32,
+                  ),
+                  Text(
+                    currentRound != 0 ? '第$currentRound回戦' : 'じゃんけん5回勝負！',
+                    style: TextStyle(
+                      fontSize: 24,
+                    ),
+                  ),
+                  Text(
+                    result,
+                    style: TextStyle(
+                      fontSize: 60,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 32,
+                  ),
+                  Text(
+                    computerHand,
+                    style: TextStyle(fontSize: 60, color: Colors.red),
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  Text(
+                    myHand,
+                    style: TextStyle(fontSize: 60),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(
-              height: 16,
-            ),
-            Text(
-              computerHand,
-              style: TextStyle(fontSize: 60, color: Colors.red),
-            ),
-            const SizedBox(
-              height: 16,
-            ),
-            Text(
-              myHand,
-              style: TextStyle(fontSize: 60),
-            ),
-            const SizedBox(
-              height: 16,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    selectHand(goo);
-                  },
-                  child: const Text(goo),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    selectHand(choki);
-                  },
-                  child: const Text(choki),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    selectHand(par);
-                  },
-                  child: const Text(par),
-                ),
-              ],
+            SizedBox(
+              height: 80,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      selectHand(goo);
+                    },
+                    child: const Text(goo),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      selectHand(choki);
+                    },
+                    child: const Text(choki),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      selectHand(par);
+                    },
+                    child: const Text(par),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -105,6 +131,12 @@ class _JankenPageState extends State<JankenPage> {
     myHand = selectedHand;
     generateComputerHand(); // コンピューターの手を決める。
     judge();
+    currentRound += 1;
+
+    if (currentRound == 5) {
+      resetAndShowResult();
+    }
+
     setState(() {});
   }
 
@@ -144,12 +176,49 @@ class _JankenPageState extends State<JankenPage> {
   void judge() {
     if (myHand == computerHand) {
       result = '引き分け';
+      drawCount += 1;
     } else if ((myHand == goo && computerHand == choki) ||
         (myHand == choki && computerHand == par) ||
         (myHand == par && computerHand == goo)) {
       result = '勝ち';
+      winCount += 1;
     } else {
       result = '負け';
+      loseCount += 1;
     }
+  }
+
+  void resetAndShowResult() async {
+    String finalResult;
+    if (winCount > loseCount) {
+      finalResult = '勝ち';
+    } else if (loseCount > winCount) {
+      finalResult = '負け';
+    } else {
+      finalResult = '引き分け';
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResultPage(
+          winCount: winCount,
+          drawCount: drawCount,
+          loseCount: loseCount,
+          finalResult: finalResult,
+        ),
+        fullscreenDialog: true,
+      ),
+    );
+
+    currentRound = 0;
+    winCount = 0;
+    drawCount = 0;
+    loseCount = 0;
+    result = '';
+    myHand = '';
+    computerHand = '';
+
+    setState(() {});
   }
 }
